@@ -1,0 +1,1005 @@
+#include "Graph.h"
+
+
+vector<vector<int>> readGraphFile (string file_name);
+vector<vector<string>> readKeywordFile (string file_name);
+vector<int> readImpressionsFile (string file_name);
+vector<int> readCTRFile(string file_name);
+
+int newSearch(Graph network);
+
+int main()
+{
+	vector<vector<int>> adj = readGraphFile("Web Graph File.csv");
+	vector<vector<string>> keys = readKeywordFile("Keyword file.csv");
+	vector <int> imp = readImpressionsFile("impressions file.csv");
+	vector<int> CTR = readCTRFile("CTR.txt"); 
+	Graph network(adj, keys, imp, CTR);
+	network.start();
+
+
+	int choice;
+
+	cout << "Welcome!" << endl << "What would you like to do? " << endl << "1. New Search " << endl << "2. Exit " << endl;
+	cout << endl << "Type in your choice here: ";
+	cin >> choice;
+
+	while (choice != 1 && choice != 2)
+	{
+		cout << "Invalid input!\n";
+		cout << "What would you like to do? " << endl << "1. New Search " << endl << "2. Exit " << endl;
+		cout << endl << "Type in your choice here: ";
+		cin >> choice;
+	}
+
+
+	while (choice == 1)
+	{
+		 choice = newSearch(network);
+		 CTR = readCTRFile("CTR.txt");
+		 imp = readImpressionsFile("impressions file.csv");
+		 network.set_CTR(CTR);
+		 network.set_impresssions(imp);
+
+	}
+
+	
+	if (choice == 2)
+	{
+		cout << "I hope you enjoyed searching using our search engine :) bye!";
+		return 0;
+	}
+	
+	
+	
+	return 0;
+}
+
+
+
+int newSearch(Graph network)
+{
+	int choice = 0;
+	string word;
+	vector <string> input;
+	input.resize(4);
+
+	cout << "Please Enter you search keywords, 2 keywords at most. \nYou may use words like AND, OR, and Quotation marks (\"\") "
+		<< "between if needed to used between 2 keywords. \nYour search keywords: ";
+
+	cin.ignore();
+
+	getline(cin, input[0],'\n'); //to divide the string into separate substrings  
+	
+	int i = 1;
+	
+	for (auto x : input[0])
+	{
+		if (x == ' ')
+		{
+			
+			//cout << word << endl;
+			word = "";
+			i++;
+		}
+		else {
+			word = word + x;
+			input[i] = word;
+		}
+	}
+	
+	if (input[2].empty() && input[3].empty()) //user entered one word
+	{
+		choice = network.oneWordSearch(input[1]);
+		choice--;
+	}
+	else if (input[1][0] == '"')
+	{ 
+		string word;
+		word = input[1].substr(1, input[1].size() - 1);
+		word = word + " " + input[2].substr(0, input[2].size() - 1);
+		choice = network.oneWordSearch(word);
+		choice--;
+	}
+	else
+	{
+		if (input[2] == "and" || input[2] == "AND")
+		{
+			choice = network.andSearch(input[1], input[3]);
+			choice--;
+		}
+		else if (input[2] == "or" || input[2] == "OR")
+		{
+			choice = network.orSearch(input[1], input[3]);
+			choice--;
+		}
+		else if ((input[3].length() == 0) && input[1][0] != '\"')
+		{
+			choice = network.orSearch(input[1], input[2]);
+			choice--;
+		}
+	}
+
+	
+	while (choice != 1 && choice != 2)
+	{
+		cout << "Invalid input!\n";
+		cout << "What would you like to do? " << endl << "1. New Search " << endl << "2. Exit " << endl;
+		cout << endl << "Type in your choice here: ";
+		cin >> choice;
+	}
+
+	return choice;
+}
+
+
+vector<vector<int>> readGraphFile(string file_name)
+{
+	vector<vector<int>> adj_list;
+	adj_list.resize(10);
+
+	string source, destination;
+	int src, dest;
+
+	ifstream Web_Graph_File;
+	Web_Graph_File.open(file_name);
+
+	if (Web_Graph_File.is_open())
+	{
+		while (Web_Graph_File.good())
+		{
+			getline(Web_Graph_File, source, ',');
+			getline(Web_Graph_File, destination, '\n');
+
+			if (source[8] == '1' && source[9] == '0')
+			{
+				src = 10;
+			}
+			else
+			{
+				src = atoi(&source[8]);
+			}
+
+			if (destination[8] == '1' && destination[9] == '0')
+			{
+				dest = 10;
+			}
+			else
+			{
+				dest = atoi(&destination[8]);
+			}
+
+			//cout << src - 1 << "  " << dest - 1 << endl;
+			adj_list[src - 1].push_back(dest - 1);
+			
+		}
+	}
+
+	Web_Graph_File.close();
+
+	return adj_list;
+}
+
+vector<vector<string>> readKeywordFile(string file_name)
+{
+	vector<vector<string>> keyword_list;
+	keyword_list.resize(10);
+
+	string site, word1, word2, word3, word4, word5;
+	int src;
+
+	ifstream keyword_File;
+	keyword_File.open(file_name);
+
+	if (keyword_File.is_open()) {
+		while (keyword_File.good())
+		{
+			getline(keyword_File, site, ',');
+			getline(keyword_File, word1, ',');
+			getline(keyword_File, word2, ',');
+			getline(keyword_File, word3, ',');
+			getline(keyword_File, word4, ',');
+			getline(keyword_File, word5, '\n');
+
+
+			if (site[8] == '1' && site[9] == '0')
+			{
+				src = 10;
+			}
+			else
+			{
+				src = atoi(&site[8]);
+			}
+
+
+			keyword_list[src - 1].push_back(word1);
+			keyword_list[src - 1].push_back(word2);
+			keyword_list[src - 1].push_back(word3);
+			keyword_list[src - 1].push_back(word4);
+			keyword_list[src - 1].push_back(word5);
+		}
+	}
+
+	keyword_File.close();
+
+	return keyword_list;
+}
+
+vector<int> readImpressionsFile(string file_name)
+{
+	vector<int> impressions_list;
+	impressions_list.resize(10);
+
+	string  number;
+	int  n = 0, i=0;
+
+	ifstream Impressions_File;
+	Impressions_File.open(file_name);
+
+	if (Impressions_File.is_open())
+	{
+		while (Impressions_File.good())
+		{
+			getline(Impressions_File, number, ',');
+			if (!number.empty())
+			{
+				n = stoi(number);
+				impressions_list[i] = n;
+			}		
+			i++;
+		}
+	}
+	Impressions_File.close();
+
+	return impressions_list;
+}
+
+vector<int> readCTRFile(string file_name)
+{
+	vector<int> CTR;
+	CTR.resize(10);
+
+	ifstream CTR_File;
+	CTR_File.open(file_name);
+
+	if (CTR_File.is_open())
+	{
+		CTR_File >> CTR[0] >> CTR[1] >> CTR[2] >> CTR[3] >> CTR[4] >> CTR[5] >> CTR[6] >> CTR[7] >> CTR[8] >> CTR[9];
+	}
+	CTR_File.close();
+
+	return CTR;
+}
+
+
+
+===========================================================
+#include "Graph.h"
+
+
+Graph::Graph(vector<vector<int>> adj_Listvector, vector<vector<string>> keys, vector<int> imp, vector<int> ctr)
+{
+	adjList = adj_Listvector;
+	N=adjList.size();
+	keywords = keys;
+	impressions = imp;
+	CTR = ctr;
+	Pagerank.resize(N);
+
+}
+
+
+void Graph::set_adjlist(vector<vector<int>> adj)
+{
+	adjList = adj;
+}
+
+void Graph::set_keywordlist(vector<vector<string>> keys)
+{
+	keywords = keys;
+}
+
+void Graph::set_impresssions(vector<int> imp)
+{
+	impressions = imp;
+}
+
+void Graph::set_CTR(vector<int> ctr)
+{
+	CTR = ctr;
+}
+
+void Graph::numpointingnodes()
+{
+	
+	NumberOfPointers.resize(N);
+	pointingNodes.resize(N);
+	int counter = 0;
+	for (int k = 0; k < N; k++)
+	{
+		counter = 0;
+		for (int i = 0; i < N; i++)
+		{
+			for (int j = 0; j < adjList[i].size(); j++)
+			{
+				if (adjList[i][j] == k)
+				{
+					counter++;
+					pointingNodes[k].push_back(i);
+				}
+			}
+		}
+		NumberOfPointers[k] = counter;
+	}
+	
+}
+
+void Graph::pageranking()
+{
+	int index = N;
+
+	vector<vector<double>> temp;
+	temp.resize(N);
+
+
+	set <double> ranks;
+	set<double> ::reverse_iterator it = ranks.rbegin();
+
+	for (int i = 0; i < N; i++)
+	{
+		temp[i].resize(1000);
+		temp[i][0] = 1.0 / N;
+	}
+
+	int previous = 0; 
+	double sum = 0;
+	
+	for (int j = 1; j < 1000; j++)
+	{
+		for (int i = 0; i < N; i++)
+		{
+			sum = 0;
+			for (int k = 0; k < pointingNodes[i].size(); k++)
+			{
+				previous = pointingNodes[i][k];
+				sum = sum + ( double (temp[previous][j - 1]) / double (adjList[previous].size()));
+				
+			}
+			temp[i][j] = sum;
+		}
+	}
+	double min = 10000;
+	for (int i = 0; i < temp.size(); i++)
+	{
+		if (temp[i][999] < min)
+			min = temp[i][999];
+	}
+	
+	double max = 0;
+	for (int i = 0; i < temp.size(); i++)
+	{
+		if (temp[i][999] > max)
+			max = temp[i][999];
+	}
+	
+	for (int i = 0; i < temp.size(); i++)
+	{
+		Pagerank[i] = double ( double ( (temp[i][999] - min) ) / double ( (max - min) ) );
+	}
+
+	
+	
+}
+
+void Graph::printGraph()
+{
+	for (int i = 0; i < N; i++)
+	{
+		cout << i << " --> ";
+
+		for (int v : adjList[i])
+			cout << v << "  ";
+
+		cout << endl;
+	}
+	cout << "---------------------" << endl;
+	for (int i = 0; i < N; i++)
+	{
+		cout << i << " --> ";
+
+		for (string v : keywords[i])
+			cout << v << "  ";
+
+		cout << endl;
+	}
+	cout << "---------------------" << endl;
+	for (int i = 0; i < N; i++)
+	{
+		cout << i << " --> " << impressions[i];
+		cout << endl;
+	}
+}
+
+void Graph::start()
+{
+	numpointingnodes();
+	pageranking();
+	pagescoring();
+
+}
+
+void Graph::pagescoring()
+{
+	
+	
+
+	PageScore.resize(N);
+	double exp = 0.0;
+	double x;
+	for (int i = 0; i < N; i++)
+	{
+		exp = (0.1 * impressions[i]) / ( 1.0 + (0.1 * impressions[i]) );
+		x = (0.4 * Pagerank[i]) + ((((1.0 - exp) * Pagerank[i]) + exp * CTR[i]) * 0.6);
+		PageScore[i] = x;
+		
+	}
+	
+}
+
+int Graph::oneWordSearch(string word)
+{
+	set<double> results;
+	vector<int> resultsindex;
+	int index=1, choice=1;
+	int flag=0;
+
+	set<double> ::reverse_iterator it = results.rbegin();
+	
+	
+	
+	while (choice == 1)
+	{
+		
+
+		flag = 0;
+		index = 1; 
+		for (int i = 0; i < keywords.size(); i++)
+		{
+			for (int j = 0; j < keywords[i].size(); j++)
+			{
+				if (keywords[i][j] == word)
+				{
+					results.insert(PageScore[i]);
+					flag++;
+				}
+			}
+		}
+
+		cout << " Search Results: \n";
+
+		if (flag == 0)
+		{
+			cout << "There is no results for the entered keywords.\n" << "please choose new search and try new keywords.\n";
+
+			cout << " Would you like to" << endl;
+			cout << "1. New Search\n" << "2. Exit\n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+
+			while (choice != 1 && choice != 2 )
+			{
+				cout << "Invalid input!\n";
+				cout << " Would you like to" << endl;
+				cout << "1. New Search\n" << "2. Exit\n";
+
+				cout << "Type in your choice here: ";
+				cin >> choice;
+			}
+			choice++;
+			break;
+		}
+		else 
+		{
+			for (it = results.rbegin(); it != results.rend(); it++)
+			{
+				for (int i = 0; i < PageScore.size(); i++)
+
+					if (PageScore[i] == *it)
+					{
+						resultsindex.push_back(i);
+						cout << index << ". www.test" << i + 1 << ".com" << endl;
+						impressions[i]++;
+					}
+				index++;
+			}
+	
+			ofstream updateIMP;
+			updateIMP.open("impressions file.csv");
+
+			if (updateIMP.is_open())
+			{
+
+				for (int i = 0; i < impressions.size(); i++)
+				{
+					updateIMP << impressions[i] << ',';
+				}
+
+			}
+			updateIMP.close();
+			
+		}
+		
+
+
+		cout << " Would you like to" << endl;
+		cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n";
+
+		cout << "Type in your choice here: ";
+		cin >> choice;
+
+		while (choice != 1 && choice != 2 && choice != 3)
+		{
+			cout << "Invalid input!\n";
+			cout << " Would you like to\n";
+			cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n \n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+		}
+
+		if (choice == 2 || choice == 3)
+		{
+			return choice;
+		}
+		else if (choice == 1)
+		{
+			cout << "choose the webpage number that you want to view.\n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+
+			cout << "You are now viewing ";
+			cout << "www.test" << resultsindex[choice - 1] + 1 << ".com\n";
+
+			CTR[resultsindex[choice - 1]] ++;
+
+			ofstream updateCTR;
+			updateCTR.open("CTR.txt");
+
+			if (updateCTR.is_open())
+			{
+
+				for (int i = 0; i < CTR.size(); i++)
+				{
+					updateCTR << CTR[i] << '\n';
+				}
+
+			}
+			updateCTR.close();
+		}
+
+		pagescoring();
+		results.clear();
+		resultsindex.clear();
+
+
+		cout << " Would you like to" << endl;
+		cout << "1. Go back to search results.\n" << "2. New Search\n" << "3. Exit \n";
+
+		cout << "\nType in your choice here: ";
+		cin >> choice;
+
+		while (choice != 1 && choice != 2 && choice != 3)
+		{
+			cout << "Invalid input!\n";
+			cout << " Would you like to\n";
+			cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n \n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+		}
+	}
+
+	
+	return choice;
+}
+
+
+
+int Graph::orSearch(string word, string word2)
+{
+	set<double> results;
+	vector<int> resultsindex;
+	int index = 1, choice = 1;
+	int flag = 0;
+
+	set<double> ::reverse_iterator it = results.rbegin();
+
+
+
+	while (choice == 1)
+	{
+
+
+		flag = 0;
+		index = 1;
+		for (int i = 0; i < keywords.size(); i++)
+		{
+			for (int j = 0; j < keywords[i].size(); j++)
+			{
+				if (keywords[i][j] == word || keywords[i][j] == word2)
+				{
+					results.insert(PageScore[i]);
+					flag++;
+					break;
+				}
+			}
+		}
+
+		cout << " Search Results: \n";
+
+		if (flag == 0)
+		{
+			cout << "There is no results for the entered keywords.\n" << "please choose new search and try new keywords.\n";
+
+			cout << " Would you like to" << endl;
+			cout << "1. New Search\n" << "2. Exit\n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+
+			while (choice != 1 && choice != 2)
+			{
+				cout << "Invalid input!\n";
+				cout << " Would you like to" << endl;
+				cout << "1. New Search\n" << "2. Exit\n";
+
+				cout << "Type in your choice here: ";
+				cin >> choice;
+			}
+			choice++;
+			break;
+		}
+		else
+		{
+			for (it = results.rbegin(); it != results.rend(); it++)
+			{
+				for (int i = 0; i < PageScore.size(); i++)
+
+					if (PageScore[i] == *it)
+					{
+						resultsindex.push_back(i);
+						cout << index << ". www.test" << i + 1 << ".com" << endl;
+						impressions[i]++;
+					}
+				index++;
+			}
+
+			ofstream updateIMP;
+			updateIMP.open("impressions file.csv");
+
+			if (updateIMP.is_open())
+			{
+
+				for (int i = 0; i < impressions.size(); i++)
+				{
+					updateIMP << impressions[i] << ',';
+				}
+
+			}
+			updateIMP.close();
+		}
+
+
+
+		cout << " Would you like to" << endl;
+		cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n";
+
+		cout << "Type in your choice here: ";
+		cin >> choice;
+
+		while (choice != 1 && choice != 2 && choice != 3)
+		{
+			cout << "Invalid input!\n";
+			cout << " Would you like to\n";
+			cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n \n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+		}
+
+		if (choice == 2 || choice == 3)
+		{
+			return choice;
+		}
+		else if (choice == 1)
+		{
+			cout << "choose the webpage number that you want to view.\n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+
+			cout << "You are now viewing";
+			cout << "www.test" << resultsindex[choice - 1] + 1 << ".com\n";
+
+			CTR[resultsindex[choice - 1]] ++;
+
+			ofstream updateCTR;
+			updateCTR.open("CTR.txt");
+
+			if (updateCTR.is_open())
+			{
+
+				for (int i = 0; i < CTR.size(); i++)
+				{
+					updateCTR << CTR[i] << '\n';
+				}
+
+			}
+			updateCTR.close();
+		}
+
+		pagescoring();
+		results.clear();
+		resultsindex.clear();
+
+
+		cout << " Would you like to" << endl;
+		cout << "1. Go back to search results.\n" << "2. New Search\n" << "3. Exit \n";
+
+		cout << "\nType in your choice here: ";
+		cin >> choice;
+
+		while (choice != 1 && choice != 2 && choice != 3)
+		{
+			cout << "Invalid input!\n";
+			cout << " Would you like to\n";
+			cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n \n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+		}
+	}
+
+
+	return choice;
+}
+
+int Graph::andSearch(string word, string word2)
+{
+	set<double> results;
+	vector<int> resultsindex;
+	int index = 1, choice = 1;
+	int flag = 0;
+
+	set<double> ::reverse_iterator it = results.rbegin();
+
+
+
+	while (choice == 1)
+	{
+
+
+		flag = 0;
+		index = 1;
+		for (int i = 0; i < keywords.size(); i++)
+		{
+			for (int j = 0; j < keywords[i].size(); j++)
+			{
+				if (keywords[i][j] == word || keywords[i][j] == word2)
+				{
+					if (keywords[i][j] == word)
+					{
+						for (int j = 0; j < keywords[i].size(); j++)
+						{
+							if (keywords[i][j] == word2)
+							{
+								results.insert(PageScore[i]);
+								flag++;
+							}
+						}
+					}
+					else
+					{
+						for (int j = 0; j < keywords[i].size(); j++)
+						{
+							if (keywords[i][j] == word)
+							{
+								results.insert(PageScore[i]);
+								flag++;
+							}
+						}
+					}
+					
+					
+				}
+			}
+		}
+
+		cout << " Search Results: \n";
+
+		if (flag == 0)
+		{
+			cout << "There is no results for the entered keywords.\n" << "please choose new search and try new keywords.\n";
+
+			cout << " Would you like to" << endl;
+			cout << "1. New Search\n" << "2. Exit\n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+
+			while (choice != 1 && choice != 2)
+			{
+				cout << "Invalid input!\n";
+				cout << " Would you like to" << endl;
+				cout << "1. New Search\n" << "2. Exit\n";
+
+				cout << "Type in your choice here: ";
+				cin >> choice;
+			}
+			choice++;
+			break;
+		}
+		else
+		{
+			for (it = results.rbegin(); it != results.rend(); it++)
+			{
+				for (int i = 0; i < PageScore.size(); i++)
+
+					if (PageScore[i] == *it)
+					{
+						resultsindex.push_back(i);
+						cout << index << ". www.test" << i + 1 << ".com" << endl;
+						impressions[i]++;
+					}
+				index++;
+			}
+			
+			ofstream updateIMP;
+			updateIMP.open("impressions file.csv");
+
+			if (updateIMP.is_open())
+			{
+
+				for (int i = 0; i < impressions.size(); i++)
+				{
+					updateIMP << impressions[i] << ',';
+				}
+
+			}
+			updateIMP.close();
+		}
+
+
+
+		cout << " Would you like to" << endl;
+		cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n";
+
+		cout << "Type in your choice here: ";
+		cin >> choice;
+
+		while (choice != 1 && choice != 2 && choice != 3)
+		{
+			cout << "Invalid input!\n";
+			cout << " Would you like to\n";
+			cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n \n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+		}
+
+		if (choice == 2 || choice == 3)
+		{
+			return choice;
+		}
+		else if (choice == 1)
+		{
+			cout << "choose the webpage number that you want to view.\n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+
+			cout << "You are now viewing";
+			cout << "www.test" << resultsindex[choice - 1] + 1 << ".com\n";
+
+			CTR[resultsindex[choice - 1]] ++;
+
+			ofstream updateCTR;
+			updateCTR.open("CTR.txt");
+
+			if (updateCTR.is_open())
+			{
+
+				for (int i = 0; i < CTR.size(); i++)
+				{
+					updateCTR << CTR[i] << '\n';
+				}
+
+			}
+			updateCTR.close();
+		}
+
+		pagescoring();
+		results.clear();
+		resultsindex.clear();
+
+
+		cout << " Would you like to" << endl;
+		cout << "1. Go back to search results.\n" << "2. New Search\n" << "3. Exit \n";
+
+		cout << "\nType in your choice here: ";
+		cin >> choice;
+
+		while (choice != 1 && choice != 2 && choice != 3)
+		{
+			cout << "Invalid input!\n";
+			cout << " Would you like to\n";
+			cout << "1. Choose a webpage to open.\n" << "2. New Search\n" << "3. Exit\n \n";
+
+			cout << "Type in your choice here: ";
+			cin >> choice;
+		}
+	}
+
+
+	return choice;
+}
+
+
+
+
+
+
+============================================================
+#pragma once
+#include <iostream>
+#include <vector>
+#include <set>
+#include <fstream>
+#include <string>
+#include <map>
+#include <algorithm>
+
+using namespace std;
+
+struct Edge
+{
+	int src, dest;
+};
+
+class Graph
+{
+private: 
+	vector<vector<int>> adjList;
+	int N;
+	vector<vector<string>> keywords;
+	vector<int> impressions;
+	vector<int> NumberOfPointers;
+	vector<vector<int>> pointingNodes;
+	vector<double> Pagerank;
+	vector<int> CTR;
+	vector<double> PageScore;
+	
+
+
+public:
+	
+	
+	Graph(vector<vector<int>> adj_Listvector, vector<vector<string>> keys, vector<int> imp, vector<int> ctr);
+	void start();
+	void set_adjlist(vector<vector<int>> adj);
+	void set_keywordlist(vector<vector<string>> keys);
+	void set_impresssions(vector<int> imp);
+	void set_CTR(vector<int> ctr);
+	void numpointingnodes();
+	void pageranking();
+	void pagescoring();
+	int oneWordSearch(string word);
+	int orSearch(string word, string word2);
+	int andSearch(string word, string word2);
+	void printGraph();
+	
+	
+};
+
